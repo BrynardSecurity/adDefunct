@@ -3,14 +3,8 @@
 # http://community.spiceworks.com/scripts/show/1861-find-and-disable-or-remove-inactive-ad-computer-accounts
 
 # Defines cut off date as 90 days before today
-import-module activedirectory
-
-$last90Days = (Get-Date).AddDays(-89)
-
-$saveFile = Read-Host -Prompt "Name to save the file to"
-
-$saveFile = 'C:\Users\chris.smith\Documents\Sec\AD Reports\' + $saveFile
-
-Get-ADUser -SearchBase "OU=Daybreak - Corporate,OU=Daybreak Facilities,OU=Daybreak Regional,OU=C2L training,OU=POC,OU=Unknown Accounts,OU=Vendors,DC=daybreakventure,DC=loc=" -Properties SamAccountName,passwordlastset,lastLogonDate -Filter {(passwordlastset -lt $last90Days) -and (enabled -eq 'True')} | 
-  Select-Object SamAccountName,passwordlastset,lastLogonDate,distinguishedname | 
-  Export-CSV $saveFile -NoTypeInformation -Encoding UTF8
+Get-ADUser -Filter  {(Enabled -eq "True")} -Properties Name,distinguishedname,PasswordLastSet | 
+    ? { ($_.distinguishedname -notlike '*Service Accounts*') } |
+where-object {$_.PasswordLastSet -lt $((Get-Date).AddDays(-90))} |
+Select-Object Name,PasswordLastSet,Enabled 
+    
